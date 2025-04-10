@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: nodejs-app
 spec:
-  replicas: 3  # 🔥 Start with 3 replicas for load balancing
+  replicas: 2  # 🔥 Start with 3 replicas for load balancing
   selector:
     matchLabels:
       app: nodejs-app
