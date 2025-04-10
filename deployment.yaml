@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-app
+spec:
+  replicas: 3  # 🔥 Start with 3 replicas for load balancing
+  selector:
+    matchLabels:
+      app: nodejs-app
+  template:
+    metadata:
+      labels:
+        app: nodejs-app
+    spec:
+      nodeSelector:
+        role: application  # Ensures pod runs on Worker-1
+      containers:
+      - name: nodejs-app
+        image: vin0139/repo:latest
+        ports:
+        - containerPort: 9000
+        env:
+        - name: DB_HOST
+          value: "10.0.2.158"  # ✅ MySQL running on Worker-2
+        - name: DB_USER
+          value: "root"
+        - name: DB_PASSWORD
+          value: "new_password"
+        - name: DB_NAME
+          value: "loginDB"
+        resources:  # ✅ Define CPU and Memory limits for autoscaling
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-service
+spec:
+  selector:
+    app: nodejs-app
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+  type: ClusterIP  # Use LoadBalancer if external access is needed
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nodejs-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nodejs-app
+  minReplicas: 2   # 🔥 Minimum number of replicas
+  maxReplicas: 10  # 🔥 Maximum number of replicas
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50  # Scale when CPU usage exceeds 50%

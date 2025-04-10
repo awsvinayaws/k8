@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-service
+spec:
+  type: NodePort  # Exposes the service externally
+  selector:
+    app: nodejs-app  # Matches the label in Deployment
+  ports:
+    - protocol: TCP
+      port: 9000        # Service port inside the cluster
+      targetPort: 9000  # Container port in the pod
+      nodePort: 31000   # Exposed port (Must be between 30000-32767)
+
